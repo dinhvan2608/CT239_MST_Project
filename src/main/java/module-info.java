@@ -7,7 +7,6 @@ module com.mst {
 
     opens com.mst to javafx.fxml;
     exports com.mst;
-    exports com.mst.controllers;
-    exports com.mst.models;
-
+    exports com.mst.graph;
+    exports com.mst.controller;
 }
