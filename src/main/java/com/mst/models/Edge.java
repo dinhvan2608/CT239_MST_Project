@@ -19,21 +19,6 @@ public class Edge {
         this.lineEdge = new Line();
     }
 
-    public Edge(Vertex startVertex, Vertex endVertex, int weight) {
-        this.startVertex = startVertex;
-        this.endVertex = endVertex;
-        this.weight = weight;
-        this.weightLabel = new Label(String.valueOf(weight));
-    }
-
-    public Edge(Edge edge) {
-        this.startVertex = edge.getStartVertex();
-        this.endVertex = edge.getEndVertex();
-        this.weight = edge.getWeight();
-        this.weightLabel = edge.getWeightLabel();
-        this.lineEdge = edge.getLineEdge();
-    }
-
     public Vertex getStartVertex() {
         return startVertex;
     }
@@ -72,15 +57,6 @@ public class Edge {
 
     public void setLineEdge(Line lineEdge) {
         this.lineEdge = lineEdge;
-    }
-
-    public Vertex getOppositeVertex(Vertex vertex) {
-        if (vertex == this.startVertex) {
-            return this.endVertex;
-        } else if (vertex == this.endVertex) {
-            return this.startVertex;
-        }
-        return null;
     }
 
     @Override

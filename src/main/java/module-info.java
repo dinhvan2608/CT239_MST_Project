@@ -4,6 +4,7 @@ module com.mst {
 
     requires org.controlsfx.controls;
     requires org.kordamp.bootstrapfx.core;
+    requires jdk.xml.dom;
 
     opens com.mst to javafx.fxml;
     exports com.mst;

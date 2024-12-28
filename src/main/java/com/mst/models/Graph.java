@@ -12,7 +12,6 @@ public class Graph {
 
     protected List<String> vertexNameList;
     protected Set<Color> colorSet;
-    private final int INFINITY = Integer.MAX_VALUE;
 
     private int[] sz = new int[100001];
     private int[] parent = new int[100001];
@@ -37,10 +36,6 @@ public class Graph {
 
     public List<String> getVertexNameList() {
         return vertexNameList;
-    }
-
-    public Set<Color> getColorSet() {
-        return colorSet;
     }
 
     public void resetGraph() {
@@ -76,10 +71,9 @@ public class Graph {
                 currentVertex.setVisited(true);
             }
         }
-
-
         return dfs;
     }
+
 
     public List<Edge> primAlgorithm(Vertex startVertex) {
         List<Edge> mst = new ArrayList<>();
@@ -127,6 +121,12 @@ public class Graph {
         }
     }
 
+//    public int findUnion(int u) {
+//        while (u != parent[u]) {
+//            u = parent[u];
+//        }
+//        return u;
+//    }
     public int findUnion(int u) {
         if (parent[u] == u) {
             return u;
@@ -157,8 +157,10 @@ public class Graph {
         edgeList.sort((o1, o2) -> o1.getWeight() - o2.getWeight());
 
         for (Edge edge : edgeList) {
+            Vertex u = edge.getStartVertex();
+            Vertex v = edge.getEndVertex();
             if (mst.size() == vertexList.size() - 1) break;
-            if (union(Integer.parseInt(edge.getStartVertex().getName()), Integer.parseInt(edge.getEndVertex().getName()))) {
+            if (union(Integer.parseInt(u.getName()), Integer.parseInt(v.getName()))) {
                 mst.add(edge);
             }
         }
@@ -189,25 +191,6 @@ public class Graph {
             }
         }
         return result;
-    }
-
-    public Edge getEdgeByVertex(Vertex vertex) {
-        for (Edge edge : getEdgeList()) {
-            if (edge.getStartVertex() == vertex || edge.getEndVertex() == vertex) {
-                return edge;
-            }
-        }
-        return null;
-    }
-
-
-    public Edge getEdgeByVertex(Vertex startVertex, Vertex endVertex) {
-        for (Edge edge : getEdgeList()) {
-            if (edge.getStartVertex() == startVertex && edge.getEndVertex() == endVertex) {
-                return edge;
-            }
-        }
-        return null;
     }
 
     public Edge getEdgeByEdgeLine(Line edgeLine) {
