@@ -204,7 +204,7 @@ public class HomeController implements Initializable {
                 listItem.add(item);
             }
 
-            notifyField.setText("Số miền liên thông: " + idConnected.size() + ". Bao gồm: ");
+            notifyField.setText("Số bộ phận liên thông: " + idConnected.size() + ". Bao gồm: ");
             for(List<String> list : listItem) {
                 notifyField.appendText("(");
                 for (String item : list) {
@@ -259,15 +259,22 @@ public class HomeController implements Initializable {
 
     public void primClickBtn() {
         try {
-//            Map<String, String> connected = getVertexConnected();
-//            Set<String> idConnected = getIdConnected(connected);
-//            if (idConnected.size() > 1)  {
-//                showAlert("Lỗi", "Đồ thị tồn tại " + idConnected.size() + " thành phần liên thông!");
-//                resetVertexVisited();
-//                return;
-//            }
+            Map<String, String> connected = getVertexConnected();
+            Set<String> idConnected = getIdConnected(connected);
+            if (idConnected.size() > 1)  {
+                showAlert("Lỗi", "Đồ thị tồn tại " + idConnected.size() + " thành phần liên thông!");
+                resetVertexVisited();
+                return;
+            }
             String startVertexName = showInputVertexDialog();
-            if (startVertexName == null) return;
+            if (startVertexName == null) {
+                startVertexName = "1";
+//                resetVertexVisited();
+//                resetBackgroundColor();
+//                resetLineColor();
+//                notifyField.clear();
+//                return;
+            };
             resetBackgroundColor();
             resetLineColor();
             notifyField.clear();
@@ -279,14 +286,18 @@ public class HomeController implements Initializable {
                 edge.getLineEdge().setStyle("-fx-stroke: red;-fx-stroke-width: 3px;");
             }
 
-            notifyField.setText("Cây khung tối tiểu (Prim): ");
+            int totalWeight = 0;
+            notifyField.setText("Đỉnh bắt đầu duyệt: " + startVertexName);
+            notifyField.appendText(". Cây khung tối tiểu (Prim): ");
             for (Edge edge : mst) {
                 if (edge == mst.getLast()) {
                     notifyField.appendText("Cung("+ edge.getStartVertex().getName() +", "+ edge.getEndVertex().getName() +")");
                 } else {
                     notifyField.appendText("Cung("+ edge.getStartVertex().getName() +", "+ edge.getEndVertex().getName() +"), ");
                 }
+                totalWeight += edge.getWeight();
             }
+            notifyField.appendText(". Tổng trọng số: " + totalWeight);
 
             resetVertexVisited();
         } catch (Exception e) {
@@ -308,6 +319,7 @@ public class HomeController implements Initializable {
                     edge.getLineEdge().setStyle("-fx-stroke: orange;-fx-stroke-width: 3px;");
                 }
 
+                int totalWeight = 0;
                 notifyField.setText("Cây khung tối tiểu (Kruskal): ");
                 for (Edge edge : mst) {
                     if (edge == mst.getLast()) {
@@ -315,7 +327,9 @@ public class HomeController implements Initializable {
                     } else {
                         notifyField.appendText("Cung("+ edge.getStartVertex().getName() +", "+ edge.getEndVertex().getName() +"), ");
                     }
+                    totalWeight += edge.getWeight();
                 }
+                notifyField.appendText(". Tổng trọng số: " + totalWeight);
 
                 resetVertexVisited();
             } else {
@@ -470,10 +484,73 @@ public class HomeController implements Initializable {
         });
     }
 
-    public void changeWeight(Label weightLabel) {
-        Edge edge = graph.getEdgeByWeightLabel(weightLabel);
-        mainPane.getChildren().remove(edge.getWeightLabel());
-        showInputWeightDialog(edge.getStartVertex(), edge.getEndVertex());
+    public void changeWeight(Label label) {
+        Edge e = graph.getEdgeByWeightLabel(label);
+        mainPane.getChildren().remove(e.getWeightLabel());
+//        showInputWeightDialog(edge.getStartVertex(), edge.getEndVertex());
+        Vertex startVertex = e.getStartVertex();
+        Vertex endVertex = e.getEndVertex();
+        TextInputDialog dialog = new TextInputDialog("1");
+        dialog.setTitle("Nhập trọng số");
+        dialog.setHeaderText(null);
+        dialog.setContentText("Nhập trọng số của cung: ");
+
+        dialog.setOnShown(ev -> {
+            Platform.runLater(() -> dialog.getEditor().selectAll());
+        });
+
+        while (true) {
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                String value = result.get();
+                try {
+                    int weight = Integer.parseInt(value);
+                    if (weight > 0) {
+                        Edge edge = new Edge();
+                        edge.setLineEdge(addEdge(startVertex.getVertexLabel(), endVertex.getVertexLabel()));
+                        edge.setStartVertex(startVertex);
+                        edge.setEndVertex(endVertex);
+                        edge.setWeight(weight);
+
+//                        graph.getEdgeList().add(edge);
+
+                        double[] edgeCoordinates = calculateCoordinates(startVertex.getVertexLabel(), endVertex.getVertexLabel(), RADIUS);
+                        Label weightLabel = new Label();
+                        weightLabel.getStyleClass().add("weightLabel");
+                        weightLabel.setText(String.valueOf(weight));
+                        weightLabel.setLayoutX((edgeCoordinates[0] + edgeCoordinates[2]) / 2.0);
+                        weightLabel.setLayoutY((edgeCoordinates[1] + edgeCoordinates[3]) / 2.0);
+
+                        edge.setWeightLabel(weightLabel);
+                        graph.getEdgeList().add(edge);
+
+                        weightLabel.toFront();
+                        mainPane.getChildren().add(weightLabel);
+                        addEventToWeight(weightLabel);
+
+                        break;
+                    } else {
+                        showAlert("Trọng số không hợp lệ", "Vui lòng nhập một số nguyên lớn hơn 0!");
+                    }
+                } catch (NumberFormatException ex) {
+                    showAlert("Trọng số không hợp lệ", "Vui lòng nhập một số nguyên!");
+                }
+            } else {
+                Edge edgePrevious = graph.getEdgeByWeightLabel(label);
+
+                double[] edgeCoordinates = calculateCoordinates(startVertex.getVertexLabel(), endVertex.getVertexLabel(), RADIUS);
+                Label weightLabel = edgePrevious.getWeightLabel();
+                weightLabel.getStyleClass().add("weightLabel");
+                weightLabel.setText(String.valueOf(edgePrevious.getWeight()));
+                weightLabel.setLayoutX((edgeCoordinates[0] + edgeCoordinates[2]) / 2.0);
+                weightLabel.setLayoutY((edgeCoordinates[1] + edgeCoordinates[3]) / 2.0);
+                weightLabel.toFront();
+
+                mainPane.getChildren().add(weightLabel);
+                addEventToWeight(weightLabel);
+                break;
+            }
+        }
     }
 
     public void vertexOnClick(MouseEvent me) {
@@ -624,19 +701,34 @@ public class HomeController implements Initializable {
                     showAlert("Trọng số không hợp lệ", "Vui lòng nhập một số nguyên!");
                 }
             } else {
-                Edge edgePrevious = graph.getEdgeList().getLast();
+                int weight = 1;
+                if (weight > 0) {
+                    Edge edge = new Edge();
+                    edge.setLineEdge(addEdge(startVertex.getVertexLabel(), endVertex.getVertexLabel()));
+                    edge.setStartVertex(startVertex);
+                    edge.setEndVertex(endVertex);
+                    edge.setWeight(weight);
 
-                double[] edgeCoordinates = calculateCoordinates(startVertex.getVertexLabel(), endVertex.getVertexLabel(), RADIUS);
-                Label weightLabel = edgePrevious.getWeightLabel();
-                weightLabel.getStyleClass().add("weightLabel");
-                weightLabel.setText(String.valueOf(edgePrevious.getWeight()));
-                weightLabel.setLayoutX((edgeCoordinates[0] + edgeCoordinates[2]) / 2.0);
-                weightLabel.setLayoutY((edgeCoordinates[1] + edgeCoordinates[3]) / 2.0);
-                weightLabel.toFront();
+//                        graph.getEdgeList().add(edge);
 
-                mainPane.getChildren().add(weightLabel);
-                addEventToWeight(weightLabel);
-                break;
+                    double[] edgeCoordinates = calculateCoordinates(startVertex.getVertexLabel(), endVertex.getVertexLabel(), RADIUS);
+                    Label weightLabel = new Label();
+                    weightLabel.getStyleClass().add("weightLabel");
+                    weightLabel.setText(String.valueOf(weight));
+                    weightLabel.setLayoutX((edgeCoordinates[0] + edgeCoordinates[2]) / 2.0);
+                    weightLabel.setLayoutY((edgeCoordinates[1] + edgeCoordinates[3]) / 2.0);
+
+                    edge.setWeightLabel(weightLabel);
+                    graph.getEdgeList().add(edge);
+
+                    weightLabel.toFront();
+                    mainPane.getChildren().add(weightLabel);
+                    addEventToWeight(weightLabel);
+
+                    break;
+                } else {
+                    showAlert("Trọng số không hợp lệ", "Vui lòng nhập một số nguyên lớn hơn 0!");
+                }
             }
         }
     }
